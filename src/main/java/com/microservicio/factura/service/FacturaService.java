@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.microservicio.factura.dto.ClienteDTO;
+import com.microservicio.factura.dto.EmpleadoDTO;
 import com.microservicio.factura.dto.ProductoDTO;
 import com.microservicio.factura.model.Factura;
 import com.microservicio.factura.repository.FacturaRepository;
@@ -18,26 +20,44 @@ import jakarta.transaction.Transactional;
 public class FacturaService {
 	@Autowired
 	private FacturaRepository facturaRepository;
+    @Autowired
     private RestTemplate restTemplate;
-
+   
 
     public Factura generarFactura(Factura factura) {
 
-        String url = "http://localhost:8082/api/v1/productos/"+ factura.getIdProducto();
+        String urlCliente = "http://localhost:8081/api/clientes/" + factura.getIdCliente();
 
-        ProductoDTO productoDTO =restTemplate.getForObject(url,ProductoDTO.class);
+        ClienteDTO cliente = restTemplate.getForObject(urlCliente, ClienteDTO.class);
 
-        if (productoDTO != null) {
+        String urlProducto = "http://localhost:8082/api/productos/" + factura.getIdProducto();
 
-            factura.setSubtotal(productoDTO.getSubtotal());
-            factura.setIva(productoDTO.getIva());
-            factura.setTotal(productoDTO.getTotal());
+        ProductoDTO producto = restTemplate.getForObject(urlProducto,ProductoDTO.class);
+
+        String urlEmpleado = "http://localhost:8083/api/empleados/"+ factura.getIdEmpleado();
+
+        EmpleadoDTO empleado =restTemplate.getForObject(urlEmpleado,EmpleadoDTO.class);
+
+        if (cliente == null) {
+            throw new RuntimeException("Cliente no encontrado");
         }
 
+        if (producto == null) {
+            throw new RuntimeException("Producto no encontrado");
+        }
+
+        if (empleado == null) {
+            throw new RuntimeException("Empleado no encontrado");
+        }
+
+        factura.setSubtotal(producto.getSubtotal());
+        factura.setIva(producto.getIva());
+        factura.setTotal(producto.getTotal());
         factura.setFechaEmision(LocalDate.now());
 
         return facturaRepository.save(factura);
     }
+
 
     public List<Factura> listarFacturas() {
         return facturaRepository.findAll();
