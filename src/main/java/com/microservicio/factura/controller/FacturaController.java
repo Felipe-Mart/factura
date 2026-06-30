@@ -1,49 +1,67 @@
 package com.microservicio.factura.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.microservicio.factura.model.Factura;
 import com.microservicio.factura.service.FacturaService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/v1/facturas")
 public class FacturaController {
+
     @Autowired
     private FacturaService facturaService;
 
+    // GENERAR FACTURA
     @PostMapping
-    public Factura postFactura(
-            @RequestBody Factura factura) {
+    public ResponseEntity<?> generarFactura(
+            @Valid @RequestBody Factura factura) {
 
-        return facturaService.generarFactura(factura);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(facturaService.generarFactura(factura));
     }
 
+    // LISTAR FACTURAS
     @GetMapping
-    public List<Factura> getFacturas() {
-        return facturaService.listarFacturas();
+    public ResponseEntity<?> listarFacturas() {
+
+        return ResponseEntity.ok(
+                facturaService.listarFacturas());
     }
 
-    @PutMapping("/{id}")
-    public Factura putFactura(@PathVariable Long id,@RequestBody Factura factura) {
-        return facturaService.modificarFactura(id, factura);
+    // OBTENER FACTURA POR ID
+    @GetMapping("/buscar/{id}")
+    public ResponseEntity<?> obtenerFacturaPorId(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                facturaService.obtenerFacturaPorId(id));
     }
 
-    @GetMapping("/{id}")
-    public Factura getFacturaId(@PathVariable Long id) {
-        return facturaService.buscarFactura(id);
+    // ELIMINAR FACTURA
+    @DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<?> eliminarFactura(
+            @PathVariable Long id) {
+
+        facturaService.eliminarFactura(id);
+
+        return ResponseEntity.ok(
+                "Factura eliminada correctamente");
     }
 
-    @PostMapping("/enviar-email/{id}")
-    public String enviarFacturaEmail(@PathVariable Long id) {
-        return facturaService.enviarFacturaEmail(id);
+    // ENVIAR FACTURA POR EMAIL
+    @PostMapping("/{id}/enviar-email")
+    public ResponseEntity<?> enviarFacturaEmail(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                facturaService.enviarFacturaPorEmail(id));
     }
 }
+
