@@ -28,81 +28,90 @@ public class FacturaService {
     @Autowired
     private RestTemplate restTemplate;
 
+    
     public Factura generarFactura(Factura factura) {
 
-        // ==========================
-        // VALIDAR EMPLEADO
-        // ==========================
-        EmpleadoDTO empleado =
-                restTemplate.getForObject(
-                        "http://localhost:8081/api/v1/empleados/buscar/"
-                                + factura.getIdEmpleado(),
-                        EmpleadoDTO.class);
+    // ==========================
+    // VALIDAR EMPLEADO
+    // ==========================
+    String urlEmpleado =
+            "http://localhost:8081/api/v1/empleados/buscar/"
+            + factura.getIdEmpleado();
 
-        if (empleado == null) {
-            throw new RuntimeException(
-                    "Empleado no encontrado");
-        }
+    EmpleadoDTO empleado =
+            restTemplate.getForObject(
+                    urlEmpleado,
+                    EmpleadoDTO.class);
 
-        // ==========================
-        // OBTENER PEDIDO
-        // ==========================
-        PedidoDTO pedido =
-                restTemplate.getForObject(
-                        "http://localhost:8087/api/v1/pedidos/buscar/"
-                                + factura.getIdPedido(),
-                        PedidoDTO.class);
+    if (empleado == null) {
+        throw new RuntimeException(
+                "Empleado no encontrado");
+    }
 
-        if (pedido == null) {
-            throw new RuntimeException(
-                    "Pedido no encontrado");
-        }
+    // ==========================
+    // OBTENER PEDIDO
+    // ==========================
+    String urlPedido =
+            "http://localhost:8087/api/v1/pedidos/buscar/"
+            + factura.getIdPedido();
 
-        // ==========================
-        // OBTENER CLIENTE
-        // ==========================
-        ClienteDTO cliente =
-                restTemplate.getForObject(
-                        "http://localhost:8081/api/v1/clientes/buscar/"
-                                + pedido.getIdCliente(),
-                        ClienteDTO.class);
+    PedidoDTO pedido =
+            restTemplate.getForObject(
+                    urlPedido,
+                    PedidoDTO.class);
 
-        if (cliente == null) {
-            throw new RuntimeException(
-                    "Cliente no encontrado");
-        }
+    if (pedido == null) {
+        throw new RuntimeException(
+                "Pedido no encontrado");
+    }
 
-        // ==========================
-        // CREAR DETALLE DE FACTURA
-        // ==========================
-        List<ProductoFactura> productosFactura =
-                new ArrayList<>();
+    // ==========================
+    // OBTENER CLIENTE
+    // ==========================
+    String urlCliente =
+            "http://localhost:8081/api/v1/clientes/buscar/"
+            + pedido.getIdCliente();
 
-        double totalFinal = 0.0;
+    ClienteDTO cliente =
+            restTemplate.getForObject(
+                    urlCliente,
+                    ClienteDTO.class);
 
-        for (ProductoPedidoDTO producto :
-                pedido.getProductos()) {
+    if (cliente == null) {
+        throw new RuntimeException(
+                "Cliente no encontrado");
+    }
 
-            ProductoFactura detalle =
-                    new ProductoFactura();
+    // ==========================
+    // CREAR DETALLE DE FACTURA
+    // ==========================
+    List<ProductoFactura> productosFactura =
+            new ArrayList<>();
 
-            detalle.setIdProducto(
-                    producto.getIdProducto());
+    double totalFinal = 0.0;
 
-            detalle.setNombProducto(
-                    producto.getNombProducto());
+    for (ProductoPedidoDTO producto : pedido.getProductos()) {
 
-            detalle.setPrecio(
-                    producto.getPrecio());
+        ProductoFactura detalle =
+                new ProductoFactura();
 
-            detalle.setCantidad(
-                    producto.getCantidad());
+        detalle.setIdProducto(
+                producto.getIdProducto());
 
-            productosFactura.add(detalle);
+        detalle.setNombProducto(
+                producto.getNombProducto());
 
-            totalFinal +=
-                    producto.getPrecio()
-                    * producto.getCantidad();
+        detalle.setPrecio(
+                producto.getPrecio());
+
+        detalle.setCantidad(
+                producto.getCantidad());
+
+        productosFactura.add(detalle);
+
+        totalFinal +=
+                producto.getPrecio()
+                * producto.getCantidad();
         }
 
         // ==========================
@@ -141,6 +150,7 @@ public class FacturaService {
         // ==========================
         factura.setFechaEmision(
                 LocalDate.now());
+        
 
         // ==========================
         // GUARDAR
